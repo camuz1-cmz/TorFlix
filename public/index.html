@@ -582,7 +582,7 @@ function applyStream() {
     const src = document.getElementById('vsrc');
     const ext = streamUrl.split('?')[0].split('.').pop().toLowerCase();
     const m = {mkv:'video/x-matroska',mp4:'video/mp4',avi:'video/x-msvideo',webm:'video/webm',mov:'video/quicktime',ts:'video/mp2t'};
-    src.type = m[ext]||'video/mp4';
+    src.type = 'video/mp4';
     src.src = `/stream?url=${encodeURIComponent(streamUrl)}`;
     v.load();
   } else {
