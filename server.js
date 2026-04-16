@@ -51,14 +51,16 @@ app.get('/stream', (req, res) => {
     'Transfer-Encoding': 'chunked'
   });
 
-  const ffmpeg = spawn('ffmpeg', [
-    '-i', videoUrl,
-    '-c:v', 'copy',
-    '-c:a', 'aac',
-    '-f', 'mp4',
-    '-movflags', 'frag_keyframe+empty_moov',
-    'pipe:1'
-  ]);
+const ffmpeg = spawn('ffmpeg', [
+  '-i', videoUrl,
+  '-c:v', 'libx264',
+  '-preset', 'veryfast',
+  '-c:a', 'aac',
+  '-b:a', '128k',
+  '-movflags', 'frag_keyframe+empty_moov',
+  '-f', 'mp4',
+  'pipe:1'
+]);
 
   ffmpeg.stdout.pipe(res);
 
