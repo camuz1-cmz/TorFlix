@@ -36,6 +36,46 @@ app.all('/proxy/*', async (req, res) => {
   }
 });
 
+const { spawn } = require('child_process');
+
+// Rota de streaming com conversão (resolve MKV)
+app.get('/stream', (req, res) => {
+  const videoUrl = req.query.url;
+
+  if (!videoUrl) {
+    return res.status(400).send('URL obrigatória');
+  }
+
+  res.writeHead(200, {
+    'Content-Type': 'video/mp4',
+    'Transfer-Encoding': 'chunked'
+  });
+
+  const ffmpeg = spawn('ffmpeg', [
+    '-i', videoUrl,
+    '-c:v', 'copy',
+    '-c:a', 'aac',
+    '-f', 'mp4',
+    '-movflags', 'frag_keyframe+empty_moov',
+    'pipe:1'
+  ]);
+
+  ffmpeg.stdout.pipe(res);
+
+  ffmpeg.stderr.on('data', (data) => {
+    console.log('FFmpeg:', data.toString());
+  });
+
+  ffmpeg.on('close', () => {
+    res.end();
+  });
+
+  ffmpeg.on('error', (err) => {
+    console.error('Erro FFmpeg:', err);
+    res.status(500).end('Erro no stream');
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`\n🎬 TorboxFlix rodando em http://localhost:${PORT}\n`);
 });
