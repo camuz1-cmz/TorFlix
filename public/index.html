@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TorboxFlix</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --bg2: #111118;
+    --bg3: #1a1a24;
+    --card: #16161f;
+    --card-hover: #1e1e2a;
+    --border: rgba(255,255,255,0.07);
+    --accent: #e50914;
+    --accent2: #ff6b35;
+    --text: #f0f0f5;
+    --muted: #8888aa;
+    --font: 'Outfit', sans-serif;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; overflow-x: hidden; }
+
+  header {
+    position: fixed; top:0; left:0; right:0; z-index:100;
+    padding: 0 2rem; height: 64px;
+    display:flex; align-items:center; justify-content:space-between;
+    background: rgba(10,10,15,0.97);
+    border-bottom: 1px solid var(--border);
+  }
+  .logo { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.5px; }
+  .logo span { color: var(--accent); }
+  .header-center { display:flex; align-items:center; gap: 4px; }
+  .nav-tab {
+    background: none; border: none; color: var(--muted); font-family: var(--font);
+    font-size: 0.88rem; font-weight: 500; padding: 6px 14px;
+    border-radius: 8px; cursor: pointer; transition: all 0.2s;
+  }
+  .nav-tab:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+  .nav-tab.active { color: var(--text); background: rgba(255,255,255,0.1); }
+  .header-right { display:flex; align-items:center; gap: 10px; }
+  .api-dot { width: 7px; height: 7px; border-radius: 50%; background: #444; transition: background 0.4s; }
+  .api-dot.ok { background: #22c55e; box-shadow: 0 0 8px #22c55e55; }
+  .api-dot.err { background: var(--accent); }
+  .api-label { font-size: 0.78rem; color: var(--muted); }
+  .btn-sm {
+    background: var(--bg3); border: 1px solid var(--border); color: var(--muted);
+    font-family: var(--font); font-size: 0.8rem; padding: 5px 12px;
+    border-radius: 7px; cursor: pointer; transition: all 0.2s;
+  }
+  .btn-sm:hover { color: var(--text); border-color: rgba(255,255,255,0.18); }
+
+  main { padding-top: 64px; }
+
+  /* ── SETUP ── */
+  #setup-screen {
+    display:flex; align-items:center; justify-content:center;
+    min-height: calc(100vh - 64px); padding: 2rem;
+  }
+  .setup-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; padding: 2.5rem; max-width: 460px; width:100%;
+  }
+  .setup-card h2 { font-size: 1.4rem; font-weight: 600; margin-bottom: 0.4rem; }
+  .setup-card p { color: var(--muted); font-size: 0.88rem; line-height: 1.6; margin-bottom: 1.5rem; }
+  .field label { display:block; font-size: 0.75rem; color: var(--muted); font-weight: 500; text-transform:uppercase; letter-spacing:0.5px; margin-bottom: 6px; }
+  .field input {
+    width:100%; background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px 14px; color: var(--text);
+    font-family: var(--font); font-size: 0.9rem; outline:none; transition: border 0.2s;
+  }
+  .field input:focus { border-color: rgba(229,9,20,0.4); }
+  .btn-primary {
+    width:100%; background: var(--accent); border: none; color: #fff;
+    font-family: var(--font); font-size: 0.95rem; font-weight: 600;
+    padding: 12px; border-radius: 10px; cursor: pointer;
+    transition: opacity 0.2s; margin-top: 1rem;
+  }
+  .btn-primary:hover { opacity: 0.85; }
+  .btn-primary:disabled { opacity: 0.5; cursor: default; }
+  .setup-err { color: #ff6b6b; font-size: 0.82rem; margin-top: 0.75rem; display:none; }
+
+  /* ── LIBRARY ── */
+  #library-screen { display:none; padding: 1.5rem 2rem 5rem; }
+  .lib-header { display:flex; align-items:center; justify-content:space-between; margin-bottom: 1.25rem; flex-wrap:wrap; gap: 10px; }
+  .lib-title { font-size: 1rem; font-weight: 600; }
+  .lib-count { font-size: 0.8rem; color: var(--muted); }
+  .lib-controls { display:flex; align-items:center; gap: 8px; }
+  .search-wrap {
+    display:flex; align-items:center; gap: 8px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 9px; padding: 7px 12px; width: 220px;
+  }
+  .search-wrap input { background:none; border:none; color: var(--text); font-family: var(--font); font-size: 0.85rem; outline:none; width:100%; }
+  .search-wrap input::placeholder { color: var(--muted); }
+  select.sort {
+    background: var(--card); border: 1px solid var(--border);
+    color: var(--text); font-family: var(--font); font-size: 0.8rem;
+    padding: 6px 10px; border-radius: 8px; cursor: pointer; outline:none;
+  }
+
+  .spinner { width:34px; height:34px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius:50%; animation: spin 0.7s linear infinite; margin: 0 auto 1rem; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .loading-state, .empty-state { text-align:center; padding: 5rem 2rem; color: var(--muted); }
+  .empty-state h3 { font-size: 1rem; font-weight:500; color: var(--text); margin-bottom: 0.4rem; }
+
+  .grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(175px, 1fr)); gap: 14px; }
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; overflow:hidden; cursor:pointer;
+    transition: transform 0.18s, border-color 0.18s, box-shadow 0.18s;
+    position:relative;
+  }
+  .card:hover { transform: translateY(-4px) scale(1.025); border-color: rgba(229,9,20,0.35); box-shadow: 0 14px 32px rgba(0,0,0,0.55); }
+  .card-thumb { width:100%; aspect-ratio:2/3; background:var(--bg3); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; }
+  .card-thumb img { width:100%; height:100%; object-fit:cover; }
+  .card-thumb .fallback { display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; height:100%; gap:8px; color:var(--muted); }
+  .card-thumb .fi { font-size:2.8rem; }
+  .type-badge {
+    position:absolute; top:8px; left:8px;
+    background: rgba(0,0,0,0.72); backdrop-filter:blur(4px);
+    border-radius: 6px; padding: 3px 8px;
+    font-size: 0.68rem; font-weight: 600; text-transform:uppercase; letter-spacing:0.5px;
+    color: var(--accent2); border: 1px solid rgba(255,107,53,0.3);
+  }
+  .card-overlay {
+    position:absolute; inset:0; background:rgba(0,0,0,0);
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; transition: all 0.18s;
+  }
+  .card:hover .card-overlay { background:rgba(0,0,0,0.52); opacity:1; }
+  .play-circle { width:48px; height:48px; background:var(--accent); border-radius:50%; display:flex; align-items:center; justify-content:center; transform:scale(0.8); transition:transform 0.18s; font-size:1.1rem; padding-left:3px; }
+  .card:hover .play-circle { transform:scale(1); }
+  .card-info { padding: 10px 12px; }
+  .card-name { font-size: 0.82rem; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .card-size { font-size: 0.73rem; color:var(--muted); margin-top:3px; }
+
+  /* ── MODAL ── */
+  #modal {
+    display:none; position:fixed; inset:0; z-index:200;
+    background:rgba(0,0,0,0.88); backdrop-filter:blur(10px);
+    padding: 1rem; overflow-y:auto;
+  }
+  .modal-box {
+    max-width: 860px; margin: 2rem auto;
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 16px; overflow:hidden;
+  }
+  .modal-head {
+    padding: 1.2rem 1.5rem; display:flex; align-items:flex-start;
+    justify-content:space-between; border-bottom: 1px solid var(--border); gap:12px;
+  }
+  .modal-head h2 { font-size: 1.15rem; font-weight:600; line-height:1.4; flex:1; }
+  .btn-close {
+    background:var(--bg3); border:1px solid var(--border); color:var(--muted);
+    width:32px; height:32px; border-radius:8px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+    font-size:1rem; transition:color 0.2s;
+  }
+  .btn-close:hover { color:var(--text); }
+  .modal-body { padding: 1.2rem 1.5rem; }
+  .badges { display:flex; gap:8px; flex-wrap:wrap; margin-bottom: 1.2rem; }
+  .badge {
+    background:var(--bg3); border:1px solid var(--border);
+    border-radius:8px; padding:4px 12px;
+    font-size:0.77rem; color:var(--muted);
+  }
+  .badge b { color:var(--text); font-weight:500; }
+
+  /* Files list */
+  #files-section { margin-bottom:1.2rem; display:none; }
+  .files-label { font-size:0.75rem; color:var(--muted); font-weight:500; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px; }
+  .files-list { display:flex; flex-direction:column; gap:5px; max-height:280px; overflow-y:auto; }
+  .fitem {
+    display:flex; align-items:center; gap:10px;
+    background:var(--bg3); border:1px solid var(--border);
+    border-radius:9px; padding:9px 12px; cursor:pointer; transition:border-color 0.18s;
+  }
+  .fitem:hover { border-color:rgba(229,9,20,0.3); }
+  .fitem.active { border-color:var(--accent); background:rgba(229,9,20,0.07); }
+  .fitem-name { flex:1; font-size:0.82rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
+  .fitem-size { font-size:0.73rem; color:var(--muted); flex-shrink:0; }
+  .fitem-play { font-size:0.72rem; color:var(--accent); font-weight:600; flex-shrink:0; opacity:0; transition:opacity 0.15s; }
+  .fitem:hover .fitem-play { opacity:1; }
+
+  /* Player tabs */
+  .ptabs { display:flex; gap:6px; margin-bottom:1rem; }
+  .ptab {
+    background:var(--bg3); border:1px solid var(--border); color:var(--muted);
+    font-family:var(--font); font-size:0.82rem; padding:7px 16px;
+    border-radius:8px; cursor:pointer; transition:all 0.18s;
+  }
+  .ptab.active { background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600; }
+  .ptab:hover:not(.active) { color:var(--text); border-color:rgba(255,255,255,0.2); }
+
+  /* Video player */
+  #video-wrap { display:none; width:100%; background:#000; border-radius:12px; overflow:hidden; aspect-ratio:16/9; position:relative; }
+  #video-wrap video { width:100%; height:100%; display:block; }
+  #video-loading { position:absolute; inset:0; background:#000; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1rem; color:var(--muted); font-size:0.88rem; }
+
+  /* VLC panel */
+  #vlc-wrap { display:none; }
+  .vlc-box { background:var(--bg3); border:1px solid var(--border); border-radius:12px; padding:1.5rem; text-align:center; }
+  .vlc-box h3 { font-size:0.95rem; font-weight:600; margin-bottom:0.4rem; }
+  .vlc-box p { color:var(--muted); font-size:0.83rem; line-height:1.6; margin-bottom:1.1rem; }
+  .url-box { background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:9px 12px; font-family:monospace; font-size:0.75rem; color:var(--muted); word-break:break-all; text-align:left; max-height:72px; overflow-y:auto; margin-bottom:1rem; }
+  .btn-row { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
+  .btn-action {
+    background:var(--bg3); border:1px solid var(--border); color:var(--text);
+    font-family:var(--font); font-size:0.83rem; font-weight:500;
+    padding:8px 18px; border-radius:9px; cursor:pointer; transition:all 0.18s;
+  }
+  .btn-action:hover { border-color:rgba(255,255,255,0.22); background:rgba(255,255,255,0.06); }
+  .btn-action.red { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .btn-action.red:hover { opacity:0.85; }
+
+  /* No file selected state */
+  .pick-hint { text-align:center; padding:2rem; color:var(--muted); font-size:0.88rem; border:1px dashed var(--border); border-radius:12px; }
+
+  /* Toast */
+  #toast { position:fixed; bottom:1.5rem; right:1.5rem; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:11px 16px; font-size:0.83rem; z-index:500; transform:translateY(16px); opacity:0; transition:all 0.25s; max-width:300px; }
+  #toast.show { transform:translateY(0); opacity:1; }
+
+  ::-webkit-scrollbar { width:4px; height:4px; }
+  ::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.1); border-radius:10px; }
+
+  @media(max-width:600px) {
+    header { padding:0 1rem; }
+    #library-screen { padding:1rem 1rem 5rem; }
+    .grid { grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:10px; }
+    .modal-box { margin:0.5rem auto; }
+    .lib-controls { flex-wrap:wrap; }
+    .search-wrap { width:100%; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Torbox<span>Flix</span></div>
+  <div class="header-center" id="nav" style="display:none">
+    <button class="nav-tab active" onclick="setFilter('all')">Tudo</button>
+    <button class="nav-tab" onclick="setFilter('movie')">Filmes</button>
+    <button class="nav-tab" onclick="setFilter('series')">Séries</button>
+  </div>
+  <div class="header-right" id="hright" style="display:none">
+    <div class="api-dot" id="dot"></div>
+    <span class="api-label" id="status-lbl">—</span>
+    <button class="btn-sm" onclick="showSetup()">⚙ API Key</button>
+    <button class="btn-sm" onclick="refresh()">↺</button>
+  </div>
+</header>
+
+<main>
+  <div id="setup-screen">
+    <div class="setup-card">
+      <h2>Bem-vindo ao TorboxFlix 🎬</h2>
+      <p>Insira sua API Key do Torbox para acessar sua biblioteca de filmes e séries.</p>
+      <div class="field">
+        <label>API Key</label>
+        <input type="password" id="key-input" placeholder="Cole sua chave aqui..." autocomplete="off" onkeydown="if(event.key==='Enter')connect()">
+      </div>
+      <button class="btn-primary" id="btn-connect" onclick="connect()">Conectar →</button>
+      <div class="setup-err" id="serr"></div>
+    </div>
+  </div>
+
+  <div id="library-screen">
+    <div class="lib-header">
+      <div>
+        <div class="lib-title" id="lib-title">Biblioteca</div>
+        <div class="lib-count" id="lib-count"></div>
+      </div>
+      <div class="lib-controls">
+        <div class="search-wrap">
+          <span style="color:var(--muted);font-size:.85rem">🔍</span>
+          <input type="text" placeholder="Buscar..." id="search" oninput="renderGrid()">
+        </div>
+        <select class="sort" id="sort" onchange="renderGrid()">
+          <option value="name">A → Z</option>
+          <option value="size">Tamanho</option>
+          <option value="date">Mais recente</option>
+        </select>
+      </div>
+    </div>
+    <div id="loading" class="loading-state"><div class="spinner"></div><div>Carregando biblioteca...</div></div>
+    <div id="grid" class="grid" style="display:none"></div>
+    <div id="empty" class="empty-state" style="display:none"><h3>Nenhum item encontrado</h3><p>Tente outro filtro ou busca</p></div>
+  </div>
+</main>
+
+<!-- MODAL -->
+<div id="modal" onclick="bgClose(event)">
+  <div class="modal-box" id="mbox">
+    <div class="modal-head">
+      <h2 id="mtitle">—</h2>
+      <button class="btn-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="badges" id="mbadges"></div>
+
+      <div id="files-section">
+        <div class="files-label">Episódios / Arquivos</div>
+        <div class="files-list" id="flist"></div>
+      </div>
+
+      <div class="ptabs">
+        <button class="ptab active" id="t-int" onclick="setTab('internal')">▶ Player Interno</button>
+        <button class="ptab" id="t-vlc" onclick="setTab('vlc')">📺 VLC / Externo</button>
+      </div>
+
+      <div id="video-wrap">
+        <div id="video-loading">
+          <div class="spinner"></div>
+          <div id="vload-msg">Obtendo link...</div>
+        </div>
+        <video id="vid" controls preload="metadata">
+          <source id="vsrc" src="" type="video/mp4">
+        </video>
+      </div>
+
+      <div id="vlc-wrap">
+        <div class="vlc-box">
+          <h3>Player Externo / VLC</h3>
+          <p>Link de streaming direto do Torbox — sem buffer intermediário. Funciona com qualquer player que aceite URLs.</p>
+          <div class="url-box" id="vlc-url">Selecione um arquivo...</div>
+          <div class="btn-row">
+            <button class="btn-action" onclick="copyUrl()">📋 Copiar link</button>
+            <button class="btn-action red" onclick="openVLC()">▶ Abrir no VLC</button>
+            <button class="btn-action" onclick="doDownload()">⬇ Download</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="pick-hint" class="pick-hint" style="display:none">👆 Selecione um episódio acima para reproduzir</div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const PROXY = '/proxy';
+let apiKey = '', allItems = [], filter = 'all', curItem = null, curFile = null, streamUrl = '', tab = 'internal';
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+(function() {
+  const k = localStorage.getItem('tbx_key');
+  if (k) { apiKey = k; showLibrary(); }
+})();
+
+// ─── API ─────────────────────────────────────────────────────────────────────
+async function api(path, params = {}) {
+  const url = new URL(PROXY + path, window.location.origin);
+  Object.entries(params).forEach(([k,v]) => url.searchParams.set(k,v));
+  const r = await fetch(url.toString(), { headers: { 'x-torbox-key': apiKey } });
+  if (!r.ok) { const t = await r.text(); throw new Error(`HTTP ${r.status}: ${t}`); }
+  return r.json();
+}
+
+// ─── CONNECT ─────────────────────────────────────────────────────────────────
+async function connect() {
+  const k = document.getElementById('key-input').value.trim();
+  if (!k) return;
+  const btn = document.getElementById('btn-connect');
+  btn.disabled = true; btn.textContent = 'Verificando...';
+  document.getElementById('serr').style.display = 'none';
+  apiKey = k;
+  try {
+    const r = await api('/user/me');
+    if (!r.success) throw new Error('API retornou erro');
+    localStorage.setItem('tbx_key', k);
+    showLibrary();
+  } catch(e) {
+    const msg = document.getElementById('serr');
+    msg.textContent = '❌ ' + (e.message.includes('401') || e.message.includes('403') ? 'API Key inválida.' : 'Erro ao conectar: ' + e.message);
+    msg.style.display = 'block';
+    apiKey = '';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Conectar →';
+  }
+}
+
+function showSetup() {
+  document.getElementById('setup-screen').style.display = 'flex';
+  document.getElementById('library-screen').style.display = 'none';
+  document.getElementById('nav').style.display = 'none';
+  document.getElementById('hright').style.display = 'none';
+  document.getElementById('key-input').value = apiKey;
+  document.getElementById('serr').style.display = 'none';
+}
+
+// ─── LIBRARY ─────────────────────────────────────────────────────────────────
+async function showLibrary() {
+  document.getElementById('setup-screen').style.display = 'none';
+  document.getElementById('library-screen').style.display = 'block';
+  document.getElementById('nav').style.display = 'flex';
+  document.getElementById('hright').style.display = 'flex';
+  await refresh();
+}
+
+async function refresh() {
+  setStatus('', 'Carregando...');
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('grid').style.display = 'none';
+  document.getElementById('empty').style.display = 'none';
+  try {
+    const [t, u] = await Promise.allSettled([
+      api('/torrents/mylist', { bypass_cache: true }),
+      api('/usenet/mylist', { bypass_cache: true })
+    ]);
+    allItems = [];
+    if (t.status === 'fulfilled' && t.value.success) (t.value.data||[]).forEach(x => allItems.push({...x, _src:'torrent'}));
+    if (u.status === 'fulfilled' && u.value.success) (u.value.data||[]).forEach(x => allItems.push({...x, _src:'usenet'}));
+    setStatus('ok', allItems.length + ' itens');
+    renderGrid();
+  } catch(e) {
+    setStatus('err', 'Erro');
+    toast('Erro: ' + e.message);
+    document.getElementById('loading').style.display = 'none';
+  }
+}
+
+function setStatus(s, txt) {
+  const d = document.getElementById('dot');
+  d.className = 'api-dot' + (s ? ' ' + s : '');
+  document.getElementById('status-lbl').textContent = txt;
+}
+
+function setFilter(f) {
+  filter = f;
+  document.querySelectorAll('.nav-tab').forEach((el,i) => el.classList.toggle('active', ['all','movie','series'][i] === f));
+  renderGrid();
+}
+
+function classify(item) {
+  const n = (item.name||'').toLowerCase();
+  const files = item.files||[];
+  const vf = files.filter(f => isVid(f.name||f.short_name||''));
+  if (vf.length === 0 && files.length > 0) return 'other';
+  if (/\bs\d{1,2}e\d{1,2}\b|season\s*\d|episode|temporada|\d{1,2}x\d{2}/.test(n)) return 'series';
+  if (vf.length > 3 && vf.some(f => /s\d{1,2}e\d{1,2}|ep\d+/i.test(f.name||f.short_name||''))) return 'series';
+  return 'movie';
+}
+
+function isVid(name) { return /\.(mp4|mkv|avi|mov|wmv|m4v|webm|ts|mpg|mpeg|flv)$/i.test(name); }
+
+function fmtSize(b) {
+  if (!b) return '';
+  if (b > 1e9) return (b/1e9).toFixed(1)+' GB';
+  if (b > 1e6) return (b/1e6).toFixed(0)+' MB';
+  return (b/1e3).toFixed(0)+' KB';
+}
+
+function renderGrid() {
+  const q = (document.getElementById('search').value||'').toLowerCase();
+  const s = document.getElementById('sort').value;
+  let items = allItems.filter(i => {
+    const t = classify(i);
+    if (filter==='movie' && t!=='movie') return false;
+    if (filter==='series' && t!=='series') return false;
+    return !q || (i.name||'').toLowerCase().includes(q);
+  });
+  if (s==='name') items.sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  else if (s==='size') items.sort((a,b)=>(b.size||0)-(a.size||0));
+  else if (s==='date') items.sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0));
+
+  document.getElementById('lib-title').textContent = filter==='movie'?'Filmes':filter==='series'?'Séries':'Biblioteca';
+  document.getElementById('lib-count').textContent = items.length + ' itens';
+  document.getElementById('loading').style.display = 'none';
+  if (!items.length) {
+    document.getElementById('grid').style.display = 'none';
+    document.getElementById('empty').style.display = 'block';
+    return;
+  }
+  document.getElementById('empty').style.display = 'none';
+  document.getElementById('grid').style.display = 'grid';
+  document.getElementById('grid').innerHTML = items.map(item => {
+    const t = classify(item);
+    const icon = t==='series'?'📺':'🎬';
+    const lbl = t==='series'?'Série':'Filme';
+    const name = item.name||'Sem título';
+    return `<div class="card" onclick="openItem('${item.id}','${item._src}')">
+      <div class="card-thumb">
+        <div class="fallback"><div class="fi">${icon}</div><div style="font-size:.68rem;color:var(--muted);padding:0 8px;text-align:center">${name.slice(0,24)}${name.length>24?'…':''}</div></div>
+        <div class="type-badge">${lbl}</div>
+        <div class="card-overlay"><div class="play-circle">▶</div></div>
+      </div>
+      <div class="card-info">
+        <div class="card-name" title="${name}">${name}</div>
+        <div class="card-size">${fmtSize(item.size)}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ─── MODAL ───────────────────────────────────────────────────────────────────
+function openItem(id, src) {
+  curItem = allItems.find(i => String(i.id)===String(id) && i._src===src);
+  if (!curItem) return;
+  curFile = null; streamUrl = '';
+
+  document.getElementById('mtitle').textContent = curItem.name||'Sem título';
+  document.getElementById('mbadges').innerHTML = [
+    curItem.size ? `<div class="badge">Tamanho: <b>${fmtSize(curItem.size)}</b></div>` : '',
+    `<div class="badge">Fonte: <b>${curItem._src==='usenet'?'Usenet':'Torrent'}</b></div>`,
+    curItem.created_at ? `<div class="badge">Adicionado: <b>${new Date(curItem.created_at).toLocaleDateString('pt-BR')}</b></div>` : ''
+  ].filter(Boolean).join('');
+
+  const vfiles = (curItem.files||[]).filter(f=>isVid(f.name||f.short_name||''));
+  const fsec = document.getElementById('files-section');
+  const hint = document.getElementById('pick-hint');
+
+  if (vfiles.length > 1) {
+    fsec.style.display = 'block';
+    hint.style.display = 'none';
+    document.getElementById('flist').innerHTML = vfiles.map(f => {
+      const fname = f.name||f.short_name||`Arquivo ${f.id}`;
+      return `<div class="fitem" id="fi-${f.id}" onclick='selectFile(${JSON.stringify(f)})'>
+        <div class="fitem-name" title="${fname}">${fname}</div>
+        <div class="fitem-size">${fmtSize(f.size)}</div>
+        <div class="fitem-play">▶ Play</div>
+      </div>`;
+    }).join('');
+  } else {
+    fsec.style.display = 'none';
+    if (vfiles.length === 1) {
+      hint.style.display = 'none';
+      selectFile(vfiles[0]);
+    } else {
+      hint.style.display = 'block';
+      selectFile({ id: 0, name: curItem.name, size: curItem.size });
+    }
+  }
+
+  resetPlayer();
+  setTab(tab);
+  document.getElementById('modal').style.display = 'block';
+  document.body.style.overflow = 'hidden';
+}
+
+function selectFile(f) {
+  curFile = f; streamUrl = '';
+  document.querySelectorAll('.fitem').forEach(el=>el.classList.remove('active'));
+  const el = document.getElementById('fi-'+f.id);
+  if (el) el.classList.add('active');
+  resetPlayer();
+  loadStream();
+}
+
+function resetPlayer() {
+  const v = document.getElementById('vid');
+  v.pause(); v.src = '';
+  document.getElementById('video-wrap').style.display = 'none';
+  document.getElementById('vlc-wrap').style.display = 'none';
+  document.getElementById('vlc-url').textContent = 'Carregando link...';
+}
+
+async function loadStream() {
+  if (!curItem || !curFile) return;
+  if (streamUrl) { applyStream(); return; }
+  document.getElementById('vload-msg').textContent = 'Obtendo link de streaming...';
+  try {
+    const ep = curItem._src==='usenet' ? '/usenet/requestdl' : '/torrents/requestdl';
+    const r = await api(ep, { token: apiKey, torrent_id: curItem.id, file_id: curFile.id||0, zip_link: false });
+    if (!r.success || !r.data) throw new Error(r.detail||'Sem URL');
+    streamUrl = r.data;
+    applyStream();
+  } catch(e) {
+    document.getElementById('vload-msg').textContent = '⚠ Erro: ' + e.message;
+    toast('Erro ao obter stream: ' + e.message);
+  }
+}
+
+function applyStream() {
+  if (tab === 'internal') {
+    document.getElementById('vlc-wrap').style.display = 'none';
+    document.getElementById('video-wrap').style.display = 'block';
+    document.getElementById('video-loading').style.display = 'none';
+    const v = document.getElementById('vid');
+    const src = document.getElementById('vsrc');
+    const ext = streamUrl.split('?')[0].split('.').pop().toLowerCase();
+    const m = {mkv:'video/x-matroska',mp4:'video/mp4',avi:'video/x-msvideo',webm:'video/webm',mov:'video/quicktime',ts:'video/mp2t'};
+    src.type = m[ext]||'video/mp4';
+    src.src = streamUrl;
+    v.load();
+  } else {
+    document.getElementById('video-wrap').style.display = 'none';
+    document.getElementById('vlc-wrap').style.display = 'block';
+    document.getElementById('vlc-url').textContent = streamUrl;
+  }
+}
+
+function setTab(t) {
+  tab = t;
+  document.getElementById('t-int').classList.toggle('active', t==='internal');
+  document.getElementById('t-vlc').classList.toggle('active', t==='vlc');
+  if (streamUrl) { applyStream(); return; }
+  if (curFile) { resetPlayer(); loadStream(); }
+}
+
+function closeModal() {
+  const v = document.getElementById('vid');
+  v.pause(); v.src = '';
+  document.getElementById('modal').style.display = 'none';
+  document.body.style.overflow = '';
+  curItem = null; curFile = null; streamUrl = '';
+}
+
+function bgClose(e) { if (e.target===document.getElementById('modal')) closeModal(); }
+
+function copyUrl() {
+  if (!streamUrl) { toast('Sem link disponível'); return; }
+  navigator.clipboard.writeText(streamUrl).then(()=>toast('✅ Link copiado!'));
+}
+
+function openVLC() {
+  if (!streamUrl) { toast('Sem link disponível'); return; }
+  window.location.href = 'vlc://' + streamUrl.replace(/^https?:\/\//,'');
+}
+
+function doDownload() {
+  if (!streamUrl) { toast('Sem link disponível'); return; }
+  const a = document.createElement('a'); a.href=streamUrl; a.download=''; a.click();
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 3000);
+}
+
+document.addEventListener('keydown', e => { if (e.key==='Escape') closeModal(); });
+</script>
+</body>
+</html>
