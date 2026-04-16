@@ -578,20 +578,22 @@ function applyStream() {
     document.getElementById('vlc-wrap').style.display = 'none';
     document.getElementById('video-wrap').style.display = 'block';
     document.getElementById('video-loading').style.display = 'none';
+
     const v = document.getElementById('vid');
     const src = document.getElementById('vsrc');
-    const ext = streamUrl.split('?')[0].split('.').pop().toLowerCase();
-    const m = {mkv:'video/x-matroska',mp4:'video/mp4',avi:'video/x-msvideo',webm:'video/webm',mov:'video/quicktime',ts:'video/mp2t'};
+
     src.type = 'video/mp4';
     src.src = `/stream?url=${encodeURIComponent(streamUrl)}`;
+
     v.load();
+    v.play().catch(() => {});
   } else {
     document.getElementById('video-wrap').style.display = 'none';
     document.getElementById('vlc-wrap').style.display = 'block';
     document.getElementById('vlc-url').textContent = streamUrl;
   }
 }
-
+  
 function setTab(t) {
   tab = t;
   document.getElementById('t-int').classList.toggle('active', t==='internal');
