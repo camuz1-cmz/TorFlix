@@ -590,7 +590,7 @@ function applyStream() {
 
     // 🔥 sempre MP4 (porque vem do FFmpeg)
     src.type = 'video/mp4';
-    src.src = `/stream?url=${encodeURIComponent(streamUrl)}`;
+    src.src = streamUrl;
 
     v.load();
 
