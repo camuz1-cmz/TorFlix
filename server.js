@@ -114,26 +114,36 @@ app.get('/tmdb', async (req, res) => {
   }
 });
 
-app.get('/ps4', (req, res) => {
-  const url = req.query.url;
-  if (!url) return res.status(400).send('URL obrigatória');
-  res.send(`<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body { background:#000; display:flex; align-items:center; justify-content:center; height:100vh; }
-  video { width:100%; height:100vh; }
-</style>
-</head>
-<body>
-<video controls autoplay playsinline preload="auto">
-  <source src="${url}" type="video/mp4">
-</video>
-</body>
-</html>`);
+aapp.get('/stream', (req, res) => {
+  const videoUrl = req.query.url;
+  if (!videoUrl) return res.status(400).send('URL obrigatória');
+
+  res.writeHead(200, {
+    'Content-Type': 'video/mp4',
+    'Transfer-Encoding': 'chunked'
+  });
+
+  const ffmpeg = spawn('ffmpeg', [
+    '-reconnect', '1',
+    '-reconnect_streamed', '1',
+    '-reconnect_delay_max', '5',
+    '-i', videoUrl,
+    '-c:v', 'libx264',
+    '-preset', 'ultrafast',
+    '-profile:v', 'baseline',
+    '-level', '3.0',
+    '-c:a', 'aac',
+    '-b:a', '128k',
+    '-f', 'mp4',
+    '-movflags', 'frag_keyframe+empty_moov',
+    'pipe:1'
+  ]);
+
+  ffmpeg.stdout.pipe(res);
+  ffmpeg.stderr.on('data', d => console.log('ffmpeg:', d.toString()));
+  ffmpeg.on('error', err => { console.error(err); res.end(); });
+  ffmpeg.on('close', () => res.end());
+  req.on('close', () => ffmpeg.kill());
 });
 
 // 🚀 START SERVER
