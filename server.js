@@ -1,3 +1,5 @@
+process.on('uncaughtException', err => { console.error('CRASH:', err); process.exit(1); });
+
 const express = require('express');
 const path = require('path');
 
