@@ -579,13 +579,25 @@ function applyStream() {
     document.getElementById('vlc-wrap').style.display = 'none';
     document.getElementById('video-wrap').style.display = 'block';
     document.getElementById('video-loading').style.display = 'none';
+
     const v = document.getElementById('vid');
     const src = document.getElementById('vsrc');
-    const ext = streamUrl.split('?')[0].split('.').pop().toLowerCase();
-    const m = {mkv:'video/x-matroska',mp4:'video/mp4',avi:'video/x-msvideo',webm:'video/webm',mov:'video/quicktime',ts:'video/mp2t'};
-    src.type = m[ext]||'video/mp4';
+
+    // 🔥 limpa completamente antes
+    v.pause();
+    v.removeAttribute('src');
+    src.removeAttribute('src');
+
+    // 🔥 sempre MP4 (porque vem do FFmpeg)
+    src.type = 'video/mp4';
     src.src = `/stream?url=${encodeURIComponent(streamUrl)}`;
+
     v.load();
+
+    // 🔥 força play
+    v.play().catch(err => {
+      console.log('Autoplay bloqueado:', err);
+    });
   } else {
     document.getElementById('video-wrap').style.display = 'none';
     document.getElementById('vlc-wrap').style.display = 'block';
