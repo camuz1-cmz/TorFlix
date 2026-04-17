@@ -1,7 +1,11 @@
-process.on('uncaughtException', err => { console.error('CRASH:', err); process.exit(1); });
+process.on('uncaughtException', err => { 
+  console.error('CRASH:', err); 
+  process.exit(1); 
+});
 
 const express = require('express');
 const path = require('path');
+const { spawn } = require('child_process'); // 👈 IMPORTANTE
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -10,12 +14,11 @@ const TORBOX_BASE = 'https://api.torbox.app/v1/api';
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Proxy genérico para qualquer endpoint do Torbox
+// Proxy Torbox
 app.all('/proxy/*', async (req, res) => {
   const endpoint = req.path.replace('/proxy', '');
   const url = new URL(TORBOX_BASE + endpoint);
 
-  // Repassa query params
   Object.entries(req.query).forEach(([k, v]) => url.searchParams.set(k, v));
 
   const apiKey = req.headers['x-torbox-key'];
@@ -38,23 +41,53 @@ app.all('/proxy/*', async (req, res) => {
   }
 });
 
-const { spawn } = require('child_process');
 
-const ffmpeg = spawn('ffmpeg', [
-  '-headers', `User-Agent: Mozilla/5.0\r\n`,
-  '-reconnect', '1',
-  '-reconnect_streamed', '1',
-  '-reconnect_delay_max', '5',
-  '-i', videoUrl,
-  '-c:v', 'libx264',
-  '-preset', 'veryfast',
-  '-c:a', 'aac',
-  '-b:a', '128k',
-  '-f', 'mp4',
-  '-movflags', 'frag_keyframe+empty_moov',
-  'pipe:1'
-]);
+// 🎬 ROTA DE STREAM (ESSA É A PARTE QUE FALTAVA)
+app.get('/stream', (req, res) => {
+  const videoUrl = req.query.url;
 
+  if (!videoUrl) {
+    return res.status(400).send('URL obrigatória');
+  }
+
+  res.writeHead(200, {
+    'Content-Type': 'video/mp4',
+    'Transfer-Encoding': 'chunked'
+  });
+
+  const ffmpeg = spawn('ffmpeg', [
+    '-headers', `User-Agent: Mozilla/5.0\r\n`,
+    '-reconnect', '1',
+    '-reconnect_streamed', '1',
+    '-reconnect_delay_max', '5',
+    '-i', videoUrl,
+    '-c:v', 'libx264',
+    '-preset', 'veryfast',
+    '-c:a', 'aac',
+    '-b:a', '128k',
+    '-f', 'mp4',
+    '-movflags', 'frag_keyframe+empty_moov',
+    'pipe:1'
+  ]);
+
+  ffmpeg.stdout.pipe(res);
+
+  ffmpeg.stderr.on('data', (data) => {
+    console.log('FFmpeg:', data.toString());
+  });
+
+  ffmpeg.on('error', (err) => {
+    console.error('Erro FFmpeg:', err);
+    res.status(500).end('Erro no streaming');
+  });
+
+  ffmpeg.on('close', () => {
+    res.end();
+  });
+});
+
+
+// 🚀 START SERVER
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`TorboxFlix rodando na porta ${PORT}`);
+  console.log(`🎬 TorboxFlix rodando na porta ${PORT}`);
 });
