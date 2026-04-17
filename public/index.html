@@ -449,10 +449,9 @@ async function refresh() {
           if (filter==='series' && t!=='series') return false;
           return true;
         });
-        const cardIndex = visibleItems.findIndex(i => i.id === item.id);
-        const cards = document.querySelectorAll('.card');
-        if (cardIndex === -1 || !cards[cardIndex]) return;
-        const thumb = cards[cardIndex].querySelector('.card-thumb');
+       const card = document.querySelector(`.card[data-id="${item.id}"][data-src="${item._src}"]`);
+      if (!card) return;
+        const thumb = card.querySelector('.card-thumb');
         if (!thumb) return;
         const lbl = classify(item)==='series'?'Série':'Filme';
         thumb.innerHTML = `<img src="${tmdbCache[item.id].poster}" alt="" style="width:100%;height:100%;object-fit:cover;">
@@ -527,7 +526,8 @@ function renderGrid() {
   const lbl = t==='series'?'Série':'Filme';
   const name = item.name||'Sem título';
   const cachedPoster = tmdbCache[item.id]?.poster;
-  return `<div class="card" onclick="openItem('${item.id}','${item._src}')">
+  return `<div class="card" data-id="${item.id}" data-src="${item._src}" onclick="openItem('${item.id}','${item._src}')">
+  
     <div class="card-thumb">
       ${cachedPoster
         ? `<img src="${cachedPoster}" alt="${name}" style="width:100%;height:100%;object-fit:cover;">`
