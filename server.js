@@ -38,6 +38,8 @@ app.all('/proxy/*', async (req, res) => {
   }
 });
 
+const { spawn } = require('child_process');
+
 const ffmpeg = spawn('ffmpeg', [
   '-headers', `User-Agent: Mozilla/5.0\r\n`,
   '-reconnect', '1',
