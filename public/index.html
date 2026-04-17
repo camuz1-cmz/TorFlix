@@ -253,7 +253,8 @@
 </header>
 
 <main>
-  <div class="setup-card">
+    <div id="setup-screen">
+    <div class="setup-card">
   <h2>Bem-vindo ao TorboxFlix 🎬</h2>
   <p>Insira suas chaves para acessar sua biblioteca.</p>
   <div class="field">
@@ -267,7 +268,9 @@
   <button class="btn-primary" id="btn-connect" id="btn-connect">Conectar →</button>
   <div class="setup-err" id="serr"></div>
 </div>
-
+  </div>
+    </div>
+  
   <div id="library-screen">
     <div class="lib-header">
       <div>
@@ -518,6 +521,7 @@ function renderGrid() {
     </div>
   </div>`;
 }).join('');
+}
 
 // ─── MODAL ───────────────────────────────────────────────────────────────────
 async function openItem(id, src) {
