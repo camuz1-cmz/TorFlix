@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+<script src="https://cdn.jsdelivr.net/npm/artplayer/dist/artplayer.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TorboxFlix</title>
@@ -195,7 +196,9 @@
   .ptab:hover:not(.active) { color:var(--text); border-color:rgba(255,255,255,0.2); }
 
   /* Video player */
-  #video-wrap { display:none; width:100%; background:#000; border-radius:12px; overflow:hidden; aspect-ratio:16/9; position:relative; }
+<div id="video-wrap" style="display:none; width:100%; border-radius:12px; overflow:hidden; aspect-ratio:16/9;">
+  <div id="artplayer-container" style="width:100%; height:100%;"></div>
+</div>
   #video-wrap video { width:100%; height:100%; display:block; }
   #video-loading { position:absolute; inset:0; background:#000; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1rem; color:var(--muted); font-size:0.88rem; }
 
@@ -578,25 +581,14 @@ function applyStream() {
   if (tab === 'internal') {
     document.getElementById('vlc-wrap').style.display = 'none';
     document.getElementById('video-wrap').style.display = 'block';
-    document.getElementById('video-loading').style.display = 'none';
-
-    const v = document.getElementById('vid');
-    const src = document.getElementById('vsrc');
-
-    // 🔥 limpa completamente antes
-    v.pause();
-    v.removeAttribute('src');
-    src.removeAttribute('src');
-
-    // 🔥 sempre MP4 (porque vem do FFmpeg)
-    src.type = 'video/mp4';
-    src.src = streamUrl;
-
-    v.load();
-
-    // 🔥 força play
-    v.play().catch(err => {
-      console.log('Autoplay bloqueado:', err);
+    if (window._art) { window._art.destroy(); window._art = null; }
+    window._art = new Artplayer({
+      container: '#artplayer-container',
+      url: streamUrl,
+      autoplay: true,
+      fullscreen: true,
+      setting: true,
+      playbackRate: true,
     });
   } else {
     document.getElementById('video-wrap').style.display = 'none';
@@ -614,8 +606,7 @@ function setTab(t) {
 }
 
 function closeModal() {
-  const v = document.getElementById('vid');
-  v.pause(); v.src = '';
+  if (window._art) { window._art.destroy(); window._art = null; }
   document.getElementById('modal').style.display = 'none';
   document.body.style.overflow = '';
   curItem = null; curFile = null; streamUrl = '';
