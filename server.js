@@ -86,6 +86,34 @@ app.get('/stream', (req, res) => {
   });
 });
 
+app.get('/tmdb', async (req, res) => {
+  const { title, type, tmdb_key } = req.query;
+  if (!title || !tmdb_key) return res.json({ poster: null, overview: null });
+  
+  const clean = title
+    .replace(/\.(mkv|mp4|avi|mov)$/i, '')
+    .replace(/[\._]/g, ' ')
+    .replace(/\s*\(?\d{4}\)?\s*.*/g, '')
+    .trim();
+
+  const mediaType = type === 'series' ? 'tv' : 'movie';
+  const url = `https://api.themoviedb.org/3/search/${mediaType}?api_key=${tmdb_key}&query=${encodeURIComponent(clean)}&language=pt-BR`;
+
+  try {
+    const r = await fetch(url);
+    const data = await r.json();
+    const result = data.results?.[0];
+    if (!result) return res.json({ poster: null, overview: null });
+    res.json({
+      poster: result.poster_path ? `https://image.tmdb.org/t/p/w500${result.poster_path}` : null,
+      overview: result.overview || null,
+      title: result.title || result.name || null
+    });
+  } catch(e) {
+    res.json({ poster: null, overview: null });
+  }
+});
+
 
 // 🚀 START SERVER
 app.listen(PORT, '0.0.0.0', () => {
