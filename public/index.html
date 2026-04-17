@@ -556,8 +556,11 @@ function selectFile(f) {
 }
 
 function resetPlayer() {
-  const v = document.getElementById('vid');
-  v.pause(); v.src = '';
+  if (player) {
+    player.pause();
+    player.reset();
+  }
+
   document.getElementById('video-wrap').style.display = 'none';
   document.getElementById('vlc-wrap').style.display = 'none';
   document.getElementById('vlc-url').textContent = 'Carregando link...';
@@ -571,7 +574,7 @@ async function loadStream() {
     const ep = curItem._src==='usenet' ? '/usenet/requestdl' : '/torrents/requestdl';
     const r = await api(ep, { token: apiKey, torrent_id: curItem.id, file_id: curFile.id||0, zip_link: false });
     if (!r.success || !r.data) throw new Error(r.detail||'Sem URL');
-    streamUrl = r.data;
+    streamUrl = `/stream?url=${encodeURIComponent(r.data)}`;
     console.log('Stream URL:', streamUrl);
     applyStream();
   } catch(e) {
@@ -586,24 +589,17 @@ function applyStream() {
     document.getElementById('video-wrap').style.display = 'block';
     document.getElementById('video-loading').style.display = 'none';
 
-    const v = document.getElementById('vid');
-    const src = document.getElementById('vsrc');
+    initPlayer();
 
-    // 🔥 limpa completamente antes
-    v.pause();
-    v.removeAttribute('src');
-    src.removeAttribute('src');
+    player.src({
+      src: streamUrl,
+      type: 'video/mp4'
+    });
 
-    // 🔥 sempre MP4 (porque vem do FFmpeg)
-    src.type = 'video/mp4';
-    src.src = streamUrl;
-
-    v.load();
-
-    // 🔥 força play
-    v.play().catch(err => {
+    player.play().catch(err => {
       console.log('Autoplay bloqueado:', err);
     });
+
   } else {
     document.getElementById('video-wrap').style.display = 'none';
     document.getElementById('vlc-wrap').style.display = 'block';
@@ -620,8 +616,11 @@ function setTab(t) {
 }
 
 function closeModal() {
-  const v = document.getElementById('vid');
-  v.pause(); v.src = '';
+  if (player) {
+    player.dispose();
+    player = null;
+  }
+
   document.getElementById('modal').style.display = 'none';
   document.body.style.overflow = '';
   curItem = null; curFile = null; streamUrl = '';
@@ -651,6 +650,20 @@ function toast(msg) {
 }
 
 document.addEventListener('keydown', e => { if (e.key==='Escape') closeModal(); });
+
+function initPlayer() {
+  if (player) {
+    player.dispose();
+  }
+
+  player = videojs('vid', {
+    controls: true,
+    autoplay: false,
+    preload: 'auto',
+    fluid: true
+  });
+}
+
 </script>
 
 <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
