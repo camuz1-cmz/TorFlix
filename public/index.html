@@ -253,18 +253,20 @@
 </header>
 
 <main>
-  <div id="setup-screen">
-    <div class="setup-card">
-      <h2>Bem-vindo ao TorboxFlix 🎬</h2>
-      <p>Insira sua API Key do Torbox para acessar sua biblioteca de filmes e séries.</p>
-      <div class="field">
-        <label>API Key</label>
-        <input type="password" id="key-input" placeholder="Cole sua chave aqui..." autocomplete="off" onkeydown="if(event.key==='Enter')connect()">
-      </div>
-      <button class="btn-primary" id="btn-connect" onclick="connect()">Conectar →</button>
-      <div class="setup-err" id="serr"></div>
-    </div>
+  <div class="setup-card">
+  <h2>Bem-vindo ao TorboxFlix 🎬</h2>
+  <p>Insira suas chaves para acessar sua biblioteca.</p>
+  <div class="field">
+    <label>API Key — Torbox</label>
+    <input type="password" id="key-input" placeholder="Cole sua chave aqui..." autocomplete="off" onkeydown="if(event.key==='Enter')connect()">
   </div>
+  <div class="field" style="margin-top:0.75rem">
+    <label>API Key — TMDB</label>
+    <input type="password" id="tmdb-input" placeholder="Cole sua chave TMDB..." autocomplete="off">
+  </div>
+  <button class="btn-primary" id="btn-connect" onclick="connect()">Conectar →</button>
+  <div class="setup-err" id="serr"></div>
+</div>
 
   <div id="library-screen">
     <div class="lib-header">
@@ -343,11 +345,14 @@
 <script>
 const PROXY = '/proxy';
 let apiKey = '', allItems = [], filter = 'all', curItem = null, curFile = null, streamUrl = '', tab = 'internal';
+let tmdbKey = '';
 
 // ─── INIT ────────────────────────────────────────────────────────────────────
 (function() {
   const k = localStorage.getItem('tbx_key');
   if (k) { apiKey = k; showLibrary(); }
+  const tk = localStorage.getItem('tmdb_key');
+  if (tk) tmdbKey = tk;
 })();
 
 // ─── API ─────────────────────────────────────────────────────────────────────
@@ -371,6 +376,8 @@ async function connect() {
     const r = await api('/user/me');
     if (!r.success) throw new Error('API retornou erro');
     localStorage.setItem('tbx_key', k);
+    const tk = document.getElementById('tmdb-input').value.trim();
+    if (tk) { tmdbKey = tk; localStorage.setItem('tmdb_key', tk); }
     showLibrary();
   } catch(e) {
     const msg = document.getElementById('serr');
@@ -392,7 +399,21 @@ function showSetup() {
 }
 
 // ─── LIBRARY ─────────────────────────────────────────────────────────────────
-async function showLibrary() {
+  const tmdbCache = {};
+async function fetchTMDB(item) {
+  const key = item.id;
+  if (tmdbCache[key]) return tmdbCache[key];
+  if (!tmdbKey) return {};
+  try {
+    const type = classify(item);
+    const r = await fetch(`/tmdb?title=${encodeURIComponent(item.name)}&type=${type}&tmdb_key=${tmdbKey}`);
+    const data = await r.json();
+    tmdbCache[key] = data;
+    return data;
+  } catch(e) { return {}; }
+}
+  
+  async function showLibrary() {
   document.getElementById('setup-screen').style.display = 'none';
   document.getElementById('library-screen').style.display = 'block';
   document.getElementById('nav').style.display = 'flex';
@@ -477,36 +498,55 @@ function renderGrid() {
   document.getElementById('empty').style.display = 'none';
   document.getElementById('grid').style.display = 'grid';
   document.getElementById('grid').innerHTML = items.map(item => {
-    const t = classify(item);
-    const icon = t==='series'?'📺':'🎬';
-    const lbl = t==='series'?'Série':'Filme';
-    const name = item.name||'Sem título';
-    return `<div class="card" onclick="openItem('${item.id}','${item._src}')">
-      <div class="card-thumb">
-        <div class="fallback"><div class="fi">${icon}</div><div style="font-size:.68rem;color:var(--muted);padding:0 8px;text-align:center">${name.slice(0,24)}${name.length>24?'…':''}</div></div>
-        <div class="type-badge">${lbl}</div>
-        <div class="card-overlay"><div class="play-circle">▶</div></div>
-      </div>
-      <div class="card-info">
-        <div class="card-name" title="${name}">${name}</div>
-        <div class="card-size">${fmtSize(item.size)}</div>
-      </div>
-    </div>`;
-  }).join('');
-}
+  const t = classify(item);
+  const icon = t==='series'?'📺':'🎬';
+  const lbl = t==='series'?'Série':'Filme';
+  const name = item.name||'Sem título';
+  const cachedPoster = tmdbCache[item.id]?.poster;
+  return `<div class="card" onclick="openItem('${item.id}','${item._src}')">
+    <div class="card-thumb">
+      ${cachedPoster
+        ? `<img src="${cachedPoster}" alt="${name}" style="width:100%;height:100%;object-fit:cover;">`
+        : `<div class="fallback"><div class="fi">${icon}</div><div style="font-size:.68rem;color:var(--muted);padding:0 8px;text-align:center">${name.slice(0,24)}${name.length>24?'…':''}</div></div>`}
+      <div class="type-badge">${lbl}</div>
+      <div class="card-overlay"><div class="play-circle">▶</div></div>
+    </div>
+    <div class="card-info">
+      <div class="card-name" title="${name}">${name}</div>
+      <div class="card-size">${fmtSize(item.size)}</div>
+    </div>
+  </div>`;
+}).join('');
 
 // ─── MODAL ───────────────────────────────────────────────────────────────────
-function openItem(id, src) {
+async function openItem(id, src) {
   curItem = allItems.find(i => String(i.id)===String(id) && i._src===src);
   if (!curItem) return;
   curFile = null; streamUrl = '';
 
+  document.getElementById('modal').style.display = 'block';
+  document.body.style.overflow = 'hidden';
   document.getElementById('mtitle').textContent = curItem.name||'Sem título';
   document.getElementById('mbadges').innerHTML = [
     curItem.size ? `<div class="badge">Tamanho: <b>${fmtSize(curItem.size)}</b></div>` : '',
     `<div class="badge">Fonte: <b>${curItem._src==='usenet'?'Usenet':'Torrent'}</b></div>`,
     curItem.created_at ? `<div class="badge">Adicionado: <b>${new Date(curItem.created_at).toLocaleDateString('pt-BR')}</b></div>` : ''
   ].filter(Boolean).join('');
+
+  // Busca TMDB em paralelo
+  fetchTMDB(curItem).then(meta => {
+    if (meta.overview) {
+      const existing = document.getElementById('overview-text');
+      if (existing) existing.textContent = meta.overview;
+    }
+  });
+
+  document.getElementById('moverview') && document.getElementById('moverview').remove();
+  const overviewEl = document.createElement('div');
+  overviewEl.id = 'moverview';
+  overviewEl.style.cssText = 'font-size:0.85rem;color:var(--muted);line-height:1.7;margin-bottom:1.2rem;';
+  overviewEl.innerHTML = `<span id="overview-text">Carregando sinopse...</span>`;
+  document.getElementById('mbadges').after(overviewEl);
 
   const vfiles = (curItem.files||[]).filter(f=>isVid(f.name||f.short_name||''));
   const fsec = document.getElementById('files-section');
@@ -525,21 +565,14 @@ function openItem(id, src) {
     }).join('');
   } else {
     fsec.style.display = 'none';
-    if (vfiles.length === 1) {
-      hint.style.display = 'none';
-      selectFile(vfiles[0]);
-    } else {
-      hint.style.display = 'block';
-      selectFile({ id: 0, name: curItem.name, size: curItem.size });
-    }
+    if (vfiles.length === 1) { hint.style.display = 'none'; selectFile(vfiles[0]); }
+    else { hint.style.display = 'block'; selectFile({ id: 0, name: curItem.name, size: curItem.size }); }
   }
 
   resetPlayer();
   setTab(tab);
-  document.getElementById('modal').style.display = 'block';
-  document.body.style.overflow = 'hidden';
 }
-
+  
 function selectFile(f) {
   curFile = f; streamUrl = '';
   document.querySelectorAll('.fitem').forEach(el=>el.classList.remove('active'));
