@@ -566,6 +566,7 @@ async function loadStream() {
     const r = await api(ep, { token: apiKey, torrent_id: curItem.id, file_id: curFile.id||0, zip_link: false });
     if (!r.success || !r.data) throw new Error(r.detail||'Sem URL');
     streamUrl = r.data;
+    console.log('Stream URL:', streamUrl);
     applyStream();
   } catch(e) {
     document.getElementById('vload-msg').textContent = '⚠ Erro: ' + e.message;
