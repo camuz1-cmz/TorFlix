@@ -72,28 +72,6 @@ app.get('/tmdb', async (req, res) => {
   }
 });
 
-app.get('/ps4', (req, res) => {
-  const url = req.query.url;
-  if (!url) return res.status(400).send('URL obrigatória');
-  res.send(`<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-*{margin:0;padding:0}
-body{background:#000;width:100vw;height:100vh}
-video{width:100vw;height:100vh}
-</style>
-</head>
-<body>
-<video controls autoplay playsinline preload="auto">
-  <source src="${url}" type="video/mp4; codecs=avc1.42E01E,mp4a.40.2">
-</video>
-</body>
-</html>`);
-});
-
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`TorboxFlix rodando na porta ${PORT}`);
 });
