@@ -345,7 +345,7 @@
     <p>Abra o navegador do PS4, acesse o link abaixo e o vídeo vai carregar direto.</p>
     <div class="url-box" id="ps4-url">Selecione um arquivo...</div>
     <div class="btn-row">
-      <button class="btn-action" onclick="copyPS4Url()">📋 Copiar link</button>
+      <button class="btn-action red" onclick="copyPS4Url()">▶ Abrir vídeo</button>
     </div>
   </div>
 </div>
@@ -714,7 +714,7 @@ function toast(msg) {
 function copyPS4Url() {
   const url = document.getElementById('ps4-url').textContent;
   if (!url || url === 'Selecione um arquivo...') { toast('Sem link disponível'); return; }
-  navigator.clipboard.writeText(url).then(()=>toast('✅ Link copiado!'));
+  window.open(url, '_blank');
 }
   
 document.addEventListener('keydown', e => { if (e.key==='Escape') closeModal(); });
