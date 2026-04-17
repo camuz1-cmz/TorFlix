@@ -581,15 +581,18 @@ function applyStream() {
     document.getElementById('vlc-wrap').style.display = 'none';
     document.getElementById('video-wrap').style.display = 'block';
     document.getElementById('video-loading').style.display = 'none';
-
     const v = document.getElementById('vid');
-    const src = document.getElementById('vsrc');
-
-    src.type = 'video/mp4';
-    src.src = `/stream?url=${encodeURIComponent(streamUrl)}`;
-
-    v.load();
-    v.play().catch(() => {});
+    v.src = streamUrl;
+    if (Hls.isSupported()) {
+      const hls = new Hls();
+      hls.loadSource(streamUrl);
+      hls.attachMedia(v);
+    } else {
+      v.src = streamUrl;
+    }
+    if (window._plyr) window._plyr.destroy();
+    window._plyr = new Plyr(v);
+    v.play();
   } else {
     document.getElementById('video-wrap').style.display = 'none';
     document.getElementById('vlc-wrap').style.display = 'block';
