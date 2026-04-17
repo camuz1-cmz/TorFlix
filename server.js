@@ -39,6 +39,6 @@ app.all('/proxy/*', async (req, res) => {
 });
 
 
-app.listen(PORT, () => {
-  console.log(`\n🎬 TorboxFlix rodando em http://localhost:${PORT}\n`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`TorboxFlix rodando na porta ${PORT}`);
 });
