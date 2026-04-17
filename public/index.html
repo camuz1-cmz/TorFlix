@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/video.js"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/video.css">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TorboxFlix</title>
@@ -312,13 +310,15 @@
         <button class="ptab" id="t-vlc" onclick="setTab('vlc')">📺 VLC / Externo</button>
       </div>
 
-      <div id="video-wrap" style="display:none; width:100%; border-radius:12px; overflow:hidden; aspect-ratio:16/9;">
-  <video-player id="vjs-player">
-    <video-skin>
-      <video id="vid" preload="auto" playsinline style="width:100%;height:100%;"></video>
-    </video-skin>
-  </video-player>
-  </div>
+      <div id="video-wrap">
+        <div id="video-loading">
+          <div class="spinner"></div>
+          <div id="vload-msg">Obtendo link...</div>
+        </div>
+        <video id="vid" controls preload="metadata">
+          <source id="vsrc" src="" type="video/mp4">
+        </video>
+      </div>
 
       <div id="vlc-wrap">
         <div class="vlc-box">
@@ -578,9 +578,26 @@ function applyStream() {
   if (tab === 'internal') {
     document.getElementById('vlc-wrap').style.display = 'none';
     document.getElementById('video-wrap').style.display = 'block';
+    document.getElementById('video-loading').style.display = 'none';
+
     const v = document.getElementById('vid');
-    v.src = streamUrl;
-    v.play();
+    const src = document.getElementById('vsrc');
+
+    // 🔥 limpa completamente antes
+    v.pause();
+    v.removeAttribute('src');
+    src.removeAttribute('src');
+
+    // 🔥 sempre MP4 (porque vem do FFmpeg)
+    src.type = 'video/mp4';
+    src.src = streamUrl;
+
+    v.load();
+
+    // 🔥 força play
+    v.play().catch(err => {
+      console.log('Autoplay bloqueado:', err);
+    });
   } else {
     document.getElementById('video-wrap').style.display = 'none';
     document.getElementById('vlc-wrap').style.display = 'block';
@@ -598,7 +615,7 @@ function setTab(t) {
 
 function closeModal() {
   const v = document.getElementById('vid');
-  if (v) { v.pause(); v.src = ''; }
+  v.pause(); v.src = '';
   document.getElementById('modal').style.display = 'none';
   document.body.style.overflow = '';
   curItem = null; curFile = null; streamUrl = '';
@@ -631,5 +648,4 @@ document.addEventListener('keydown', e => { if (e.key==='Escape') closeModal(); 
 </script>
 </body>
 </html>
-
 
