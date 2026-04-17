@@ -581,15 +581,17 @@ function applyStream() {
   if (tab === 'internal') {
     document.getElementById('vlc-wrap').style.display = 'none';
     document.getElementById('video-wrap').style.display = 'block';
-    if (window._art) { window._art.destroy(); window._art = null; }
-    window._art = new Artplayer({
-      container: '#artplayer-container',
-      url: streamUrl,
-      autoplay: true,
-      fullscreen: true,
-      setting: true,
-      playbackRate: true,
-    });
+   if (window._art) { window._art.destroy(); window._art = null; }
+setTimeout(() => {
+  window._art = new Artplayer({
+    container: '#artplayer-container',
+    url: streamUrl,
+    autoplay: true,
+    fullscreen: true,
+    setting: true,
+    playbackRate: true,
+  });
+}, 100);
   } else {
     document.getElementById('video-wrap').style.display = 'none';
     document.getElementById('vlc-wrap').style.display = 'block';
