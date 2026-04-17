@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TorboxFlix</title>
@@ -316,14 +315,9 @@
           <div class="spinner"></div>
           <div id="vload-msg">Obtendo link...</div>
         </div>
-        <video
-  id="vid"
-  class="video-js vjs-default-skin vjs-big-play-centered"
-  controls
-  preload="auto"
-  data-setup="{}"
->
-</video>
+        <video id="vid" controls preload="metadata">
+          <source id="vsrc" src="" type="video/mp4">
+        </video>
       </div>
 
       <div id="vlc-wrap">
@@ -556,11 +550,8 @@ function selectFile(f) {
 }
 
 function resetPlayer() {
-  if (player) {
-    player.pause();
-    player.reset();
-  }
-
+  const v = document.getElementById('vid');
+  v.pause(); v.src = '';
   document.getElementById('video-wrap').style.display = 'none';
   document.getElementById('vlc-wrap').style.display = 'none';
   document.getElementById('vlc-url').textContent = 'Carregando link...';
@@ -574,7 +565,7 @@ async function loadStream() {
     const ep = curItem._src==='usenet' ? '/usenet/requestdl' : '/torrents/requestdl';
     const r = await api(ep, { token: apiKey, torrent_id: curItem.id, file_id: curFile.id||0, zip_link: false });
     if (!r.success || !r.data) throw new Error(r.detail||'Sem URL');
-    streamUrl = `/stream?url=${encodeURIComponent(r.data)}`;
+    streamUrl = r.data;
     console.log('Stream URL:', streamUrl);
     applyStream();
   } catch(e) {
@@ -589,17 +580,24 @@ function applyStream() {
     document.getElementById('video-wrap').style.display = 'block';
     document.getElementById('video-loading').style.display = 'none';
 
-    initPlayer();
+    const v = document.getElementById('vid');
+    const src = document.getElementById('vsrc');
 
-    player.src({
-      src: streamUrl,
-      type: 'video/mp4'
-    });
+    // 🔥 limpa completamente antes
+    v.pause();
+    v.removeAttribute('src');
+    src.removeAttribute('src');
 
-    player.play().catch(err => {
+    // 🔥 sempre MP4 (porque vem do FFmpeg)
+    src.type = 'video/mp4';
+    src.src = streamUrl;
+
+    v.load();
+
+    // 🔥 força play
+    v.play().catch(err => {
       console.log('Autoplay bloqueado:', err);
     });
-
   } else {
     document.getElementById('video-wrap').style.display = 'none';
     document.getElementById('vlc-wrap').style.display = 'block';
@@ -616,11 +614,8 @@ function setTab(t) {
 }
 
 function closeModal() {
-  if (player) {
-    player.dispose();
-    player = null;
-  }
-
+  const v = document.getElementById('vid');
+  v.pause(); v.src = '';
   document.getElementById('modal').style.display = 'none';
   document.body.style.overflow = '';
   curItem = null; curFile = null; streamUrl = '';
@@ -650,23 +645,7 @@ function toast(msg) {
 }
 
 document.addEventListener('keydown', e => { if (e.key==='Escape') closeModal(); });
-
-function initPlayer() {
-  if (player) {
-    player.dispose();
-  }
-
-  player = videojs('vid', {
-    controls: true,
-    autoplay: false,
-    preload: 'auto',
-    fluid: true
-  });
-}
-
 </script>
-
-<script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
 </body>
 </html>
 
