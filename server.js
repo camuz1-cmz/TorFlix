@@ -114,7 +114,7 @@ app.get('/tmdb', async (req, res) => {
   }
 });
 
-aapp.get('/stream', (req, res) => {
+app.get('/stream', (req, res) => {
   const videoUrl = req.query.url;
   if (!videoUrl) return res.status(400).send('URL obrigatória');
 
