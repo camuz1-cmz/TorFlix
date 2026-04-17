@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+  <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TorboxFlix</title>
@@ -315,9 +316,14 @@
           <div class="spinner"></div>
           <div id="vload-msg">Obtendo link...</div>
         </div>
-        <video id="vid" controls preload="metadata">
-          <source id="vsrc" src="" type="video/mp4">
-        </video>
+        <video
+  id="vid"
+  class="video-js vjs-default-skin vjs-big-play-centered"
+  controls
+  preload="auto"
+  data-setup="{}"
+>
+</video>
       </div>
 
       <div id="vlc-wrap">
@@ -646,6 +652,8 @@ function toast(msg) {
 
 document.addEventListener('keydown', e => { if (e.key==='Escape') closeModal(); });
 </script>
+
+<script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
 </body>
 </html>
 
