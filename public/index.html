@@ -440,13 +440,33 @@ async function refresh() {
     if (u.status === 'fulfilled' && u.value.success) (u.value.data||[]).forEach(x => allItems.push({...x, _src:'usenet'}));
     setStatus('ok', allItems.length + ' itens');
     renderGrid();
+    allItems.forEach(item => {
+      fetchTMDB(item).then(() => {
+        if (!tmdbCache[item.id]?.poster) return;
+        const visibleItems = allItems.filter(i => {
+          const t = classify(i);
+          if (filter==='movie' && t!=='movie') return false;
+          if (filter==='series' && t!=='series') return false;
+          return true;
+        });
+        const cardIndex = visibleItems.findIndex(i => i.id === item.id);
+        const cards = document.querySelectorAll('.card');
+        if (cardIndex === -1 || !cards[cardIndex]) return;
+        const thumb = cards[cardIndex].querySelector('.card-thumb');
+        if (!thumb) return;
+        const lbl = classify(item)==='series'?'Série':'Filme';
+        thumb.innerHTML = `<img src="${tmdbCache[item.id].poster}" alt="" style="width:100%;height:100%;object-fit:cover;">
+          <div class="type-badge">${lbl}</div>
+          <div class="card-overlay"><div class="play-circle">▶</div></div>`;
+      });
+    });
   } catch(e) {
     setStatus('err', 'Erro');
     toast('Erro: ' + e.message);
     document.getElementById('loading').style.display = 'none';
   }
 }
-
+  
 function setStatus(s, txt) {
   const d = document.getElementById('dot');
   d.className = 'api-dot' + (s ? ' ' + s : '');
