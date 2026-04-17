@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+<script src="https://cdn.vidstack.io/player/cdn/vidstack.js"></script>
+<link rel="stylesheet" href="https://cdn.vidstack.io/player/cdn/vidstack.css">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TorboxFlix</title>
@@ -310,15 +312,12 @@
         <button class="ptab" id="t-vlc" onclick="setTab('vlc')">📺 VLC / Externo</button>
       </div>
 
-      <div id="video-wrap">
-        <div id="video-loading">
-          <div class="spinner"></div>
-          <div id="vload-msg">Obtendo link...</div>
-        </div>
-        <video id="vid" controls preload="metadata">
-          <source id="vsrc" src="" type="video/mp4">
-        </video>
-      </div>
+      <div id="video-wrap" style="display:none">
+  <media-player id="vid-player" style="width:100%;border-radius:12px;overflow:hidden;aspect-ratio:16/9">
+    <media-provider></media-provider>
+    <media-video-layout></media-video-layout>
+  </media-player>
+    </div>
 
       <div id="vlc-wrap">
         <div class="vlc-box">
@@ -579,25 +578,9 @@ function applyStream() {
     document.getElementById('vlc-wrap').style.display = 'none';
     document.getElementById('video-wrap').style.display = 'block';
     document.getElementById('video-loading').style.display = 'none';
-
-    const v = document.getElementById('vid');
-    const src = document.getElementById('vsrc');
-
-    // 🔥 limpa completamente antes
-    v.pause();
-    v.removeAttribute('src');
-    src.removeAttribute('src');
-
-    // 🔥 sempre MP4 (porque vem do FFmpeg)
-    src.type = 'video/mp4';
-    src.src = streamUrl;
-
-    v.load();
-
-    // 🔥 força play
-    v.play().catch(err => {
-      console.log('Autoplay bloqueado:', err);
-    });
+    const player = document.getElementById('vid-player');
+    player.src = `/stream?url=${encodeURIComponent(streamUrl)}`;
+    player.play();
   } else {
     document.getElementById('video-wrap').style.display = 'none';
     document.getElementById('vlc-wrap').style.display = 'block';
@@ -614,8 +597,8 @@ function setTab(t) {
 }
 
 function closeModal() {
-  const v = document.getElementById('vid');
-  v.pause(); v.src = '';
+  const player = document.getElementById('vid-player');
+  if (player) player.pause();
   document.getElementById('modal').style.display = 'none';
   document.body.style.overflow = '';
   curItem = null; curFile = null; streamUrl = '';
