@@ -264,7 +264,7 @@
     <label>API Key — TMDB</label>
     <input type="password" id="tmdb-input" placeholder="Cole sua chave TMDB..." autocomplete="off">
   </div>
-  <button class="btn-primary" id="btn-connect" onclick="connect()">Conectar →</button>
+  <button class="btn-primary" id="btn-connect" id="btn-connect">Conectar →</button>
   <div class="setup-err" id="serr"></div>
 </div>
 
@@ -353,6 +353,7 @@ let tmdbKey = '';
   if (k) { apiKey = k; showLibrary(); }
   const tk = localStorage.getItem('tmdb_key');
   if (tk) tmdbKey = tk;
+  document.getElementById('btn-connect').onclick = connect;
 })();
 
 // ─── API ─────────────────────────────────────────────────────────────────────
