@@ -5,9 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TorboxFlix</title>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-<link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css">
-<script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
 <style>
   :root {
     --bg: #0a0a0f;
@@ -582,17 +579,12 @@ function applyStream() {
     document.getElementById('video-wrap').style.display = 'block';
     document.getElementById('video-loading').style.display = 'none';
     const v = document.getElementById('vid');
-    v.src = streamUrl;
-    if (Hls.isSupported()) {
-      const hls = new Hls();
-      hls.loadSource(streamUrl);
-      hls.attachMedia(v);
-    } else {
-      v.src = streamUrl;
-    }
-    if (window._plyr) window._plyr.destroy();
-    window._plyr = new Plyr(v);
-    v.play();
+    const src = document.getElementById('vsrc');
+    const ext = streamUrl.split('?')[0].split('.').pop().toLowerCase();
+    const m = {mkv:'video/x-matroska',mp4:'video/mp4',avi:'video/x-msvideo',webm:'video/webm',mov:'video/quicktime',ts:'video/mp2t'};
+    src.type = m[ext]||'video/mp4';
+    src.src = streamUrl;
+    v.load();
   } else {
     document.getElementById('video-wrap').style.display = 'none';
     document.getElementById('vlc-wrap').style.display = 'block';
