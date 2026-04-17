@@ -38,6 +38,20 @@ app.all('/proxy/*', async (req, res) => {
   }
 });
 
+const ffmpeg = spawn('ffmpeg', [
+  '-headers', `User-Agent: Mozilla/5.0\r\n`,
+  '-reconnect', '1',
+  '-reconnect_streamed', '1',
+  '-reconnect_delay_max', '5',
+  '-i', videoUrl,
+  '-c:v', 'libx264',
+  '-preset', 'veryfast',
+  '-c:a', 'aac',
+  '-b:a', '128k',
+  '-f', 'mp4',
+  '-movflags', 'frag_keyframe+empty_moov',
+  'pipe:1'
+]);
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`TorboxFlix rodando na porta ${PORT}`);
