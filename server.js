@@ -114,6 +114,27 @@ app.get('/tmdb', async (req, res) => {
   }
 });
 
+app.get('/ps4', (req, res) => {
+  const url = req.query.url;
+  if (!url) return res.status(400).send('URL obrigatória');
+  res.send(`<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#000; display:flex; align-items:center; justify-content:center; height:100vh; }
+  video { width:100%; height:100vh; }
+</style>
+</head>
+<body>
+<video controls autoplay playsinline preload="auto">
+  <source src="${url}" type="video/mp4">
+</video>
+</body>
+</html>`);
+});
 
 // 🚀 START SERVER
 app.listen(PORT, '0.0.0.0', () => {
