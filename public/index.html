@@ -313,6 +313,7 @@
       <div class="ptabs">
         <button class="ptab active" id="t-int" onclick="setTab('internal')">▶ Player Interno</button>
         <button class="ptab" id="t-vlc" onclick="setTab('vlc')">📺 VLC / Externo</button>
+        <button class="ptab" id="t-ps4" onclick="setTab('ps4')">🎮 PS4</button>
       </div>
 
       <div id="video-wrap">
@@ -337,6 +338,17 @@
           </div>
         </div>
       </div>
+
+      <div id="ps4-wrap" style="display:none;">
+  <div class="vlc-box">
+    <h3>Reproduzir no PS4</h3>
+    <p>Abra o navegador do PS4, acesse o link abaixo e o vídeo vai carregar direto.</p>
+    <div class="url-box" id="ps4-url">Selecione um arquivo...</div>
+    <div class="btn-row">
+      <button class="btn-action" onclick="copyPS4Url()">📋 Copiar link</button>
+    </div>
+  </div>
+</div>
 
       <div id="pick-hint" class="pick-hint" style="display:none">👆 Selecione um episódio acima para reproduzir</div>
     </div>
@@ -613,6 +625,7 @@ function resetPlayer() {
   document.getElementById('video-wrap').style.display = 'none';
   document.getElementById('vlc-wrap').style.display = 'none';
   document.getElementById('vlc-url').textContent = 'Carregando link...';
+  document.getElementById('ps4-wrap').style.display = 'none';
 }
 
 async function loadStream() {
@@ -635,29 +648,24 @@ async function loadStream() {
 function applyStream() {
   if (tab === 'internal') {
     document.getElementById('vlc-wrap').style.display = 'none';
+    document.getElementById('ps4-wrap').style.display = 'none';
     document.getElementById('video-wrap').style.display = 'block';
     document.getElementById('video-loading').style.display = 'none';
-
-    const v = document.getElementById('vid');
-    const src = document.getElementById('vsrc');
-
-    // 🔥 limpa completamente antes
-    v.pause();
-    v.removeAttribute('src');
-    src.removeAttribute('src');
-
-    // 🔥 sempre MP4 (porque vem do FFmpeg)
-    src.type = 'video/mp4';
-    src.src = streamUrl;
-
-    v.load();
-
-    // 🔥 força play
-    v.play().catch(err => {
-      console.log('Autoplay bloqueado:', err);
-    });
+    const wrap = document.getElementById('video-wrap');
+    wrap.innerHTML = `<video controls autoplay playsinline preload="auto"
+      style="width:100%;height:100%;display:block;background:#000;"
+      src="${streamUrl}">
+      <source src="${streamUrl}" type="video/mp4">
+    </video>`;
+  } else if (tab === 'ps4') {
+    document.getElementById('video-wrap').style.display = 'none';
+    document.getElementById('vlc-wrap').style.display = 'none';
+    document.getElementById('ps4-wrap').style.display = 'block';
+    const ps4Url = `${window.location.origin}/stream?url=${encodeURIComponent(streamUrl)}`;
+    document.getElementById('ps4-url').textContent = ps4Url;
   } else {
     document.getElementById('video-wrap').style.display = 'none';
+    document.getElementById('ps4-wrap').style.display = 'none';
     document.getElementById('vlc-wrap').style.display = 'block';
     document.getElementById('vlc-url').textContent = streamUrl;
   }
@@ -667,6 +675,7 @@ function setTab(t) {
   tab = t;
   document.getElementById('t-int').classList.toggle('active', t==='internal');
   document.getElementById('t-vlc').classList.toggle('active', t==='vlc');
+  document.getElementById('t-ps4').classList.toggle('active', t==='ps4');
   if (streamUrl) { applyStream(); return; }
   if (curFile) { resetPlayer(); loadStream(); }
 }
@@ -702,6 +711,12 @@ function toast(msg) {
   setTimeout(()=>t.classList.remove('show'), 3000);
 }
 
+function copyPS4Url() {
+  const url = document.getElementById('ps4-url').textContent;
+  if (!url || url === 'Selecione um arquivo...') { toast('Sem link disponível'); return; }
+  navigator.clipboard.writeText(url).then(()=>toast('✅ Link copiado!'));
+}
+  
 document.addEventListener('keydown', e => { if (e.key==='Escape') closeModal(); });
 </script>
 </body>
