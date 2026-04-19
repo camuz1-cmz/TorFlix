@@ -96,7 +96,7 @@ body{background:#000;width:100vw;height:100vh;overflow:hidden}
 <script>
 var art = new Artplayer({
   container: '#player',
-  url: '${videoUrl}',
+  url: '/stream?url=${encodeURIComponent(videoUrl)}',
   autoplay: true,
   fullscreen: true,
   playbackRate: true,
