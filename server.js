@@ -79,7 +79,6 @@ app.get('/tmdb', async (req, res) => {
 app.get('/hls', (req, res) => {
   const videoUrl = req.query.url;
   if (!videoUrl) return res.status(400).send('URL obrigatória');
-  const streamSrc = `/stream?url=${encodeURIComponent(videoUrl)}`;
   res.send(`<!DOCTYPE html>
 <html>
 <head>
@@ -97,15 +96,11 @@ body{background:#000;width:100vw;height:100vh;overflow:hidden}
 <script>
 var art = new Artplayer({
   container: '#player',
-  url: '${streamSrc}',
+  url: '${videoUrl}',
   autoplay: true,
   fullscreen: true,
   playbackRate: true,
-  aspectRatio: true,
   setting: true,
-  hotkey: true,
-  pip: false,
-  mutex: true,
   theme: '#e50914'
 });
 </script>
