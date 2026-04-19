@@ -72,6 +72,27 @@ app.get('/tmdb', async (req, res) => {
   }
 });
 
+app.get('/hls', (req, res) => {
+  const videoUrl = req.query.url;
+  if (!videoUrl) return res.status(400).send('URL obrigatória');
+  res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  const ffmpeg = spawn('ffmpeg', [
+    '-reconnect', '1', '-reconnect_streamed', '1', '-reconnect_delay_max', '5',
+    '-i', videoUrl,
+    '-c:v', 'libx264', '-preset', 'ultrafast', '-profile:v', 'baseline', '-level', '3.0',
+    '-c:a', 'aac', '-b:a', '128k',
+    '-f', 'hls', '-hls_time', '4', '-hls_list_size', '0',
+    '-hls_flags', 'append_list',
+    'pipe:1'
+  ]);
+  ffmpeg.stdout.pipe(res);
+  ffmpeg.stderr.on('data', d => console.log('hls:', d.toString()));
+  ffmpeg.on('error', err => { console.error(err); res.end(); });
+  ffmpeg.on('close', () => res.end());
+  req.on('close', () => ffmpeg.kill());
+});
+
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`TorboxFlix rodando na porta ${PORT}`);
 });
