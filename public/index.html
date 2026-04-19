@@ -340,7 +340,7 @@
     <p>Abra o navegador do PS4 e acesse o link abaixo — o vídeo vai carregar via HLS.</p>
     <div class="url-box" id="ps4-url">Selecione um arquivo...</div>
     <div class="btn-row">
-      <button class="btn-action red" onclick="window.open(document.getElementById('ps4-url').textContent,'_blank')">▶ Abrir</button>
+      <a id="ps4-link" href="#" target="_blank" class="btn-action red" style="text-decoration:none;display:inline-block;">▶ Abrir</a>
       <button class="btn-action" onclick="navigator.clipboard.writeText(document.getElementById('ps4-url').textContent).then(()=>toast('✅ Copiado!'))">📋 Copiar</button>
     </div>
   </div>
@@ -606,6 +606,7 @@ function applyStream() {
     document.getElementById('vlc-wrap').style.display = 'none';
     document.getElementById('ps4-wrap').style.display = 'block';
     document.getElementById('ps4-url').textContent = `${window.location.origin}/hls?url=${encodeURIComponent(streamUrl)}`;
+    document.getElementById('ps4-link').href = `${window.location.origin}/hls?url=${encodeURIComponent(streamUrl)}`;
   } else {
     document.getElementById('video-wrap').style.display = 'none';
     document.getElementById('ps4-wrap').style.display = 'none';
