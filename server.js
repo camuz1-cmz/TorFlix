@@ -37,13 +37,17 @@ app.get('/stream', (req, res) => {
   const videoUrl = req.query.url;
   if (!videoUrl) return res.status(400).send('URL obrigatória');
   res.writeHead(200, { 'Content-Type': 'video/mp4', 'Transfer-Encoding': 'chunked' });
-  const ffmpeg = spawn('ffmpeg', [
+ const ffmpeg = spawn('ffmpeg', [
     '-reconnect', '1', '-reconnect_streamed', '1', '-reconnect_delay_max', '5',
     '-i', videoUrl,
-    '-c:v', 'libx264', '-preset', 'ultrafast', '-profile:v', 'baseline', '-level', '3.0',
-    '-c:a', 'aac', '-b:a', '128k',
-    '-f', 'mp4', '-movflags', 'frag_keyframe+empty_moov', 'pipe:1'
-  ]);
+    '-ss', '0',
+    '-c:v', 'libx264', '-preset', 'ultrafast', '-profile:v', 'baseline', '-level', '3.1',
+    '-vf', 'scale=1280:720',
+    '-b:v', '2500k',
+    '-c:a', 'aac', '-b:a', '128k', '-ar', '44100', '-ac', '2',
+    '-f', 'mp4', '-movflags', 'frag_keyframe+empty_moov+default_base_moof',
+    'pipe:1'
+]);
   ffmpeg.stdout.pipe(res);
   ffmpeg.stderr.on('data', d => console.log('ffmpeg:', d.toString()));
   ffmpeg.on('error', err => { console.error(err); res.end(); });
