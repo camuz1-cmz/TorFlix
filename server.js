@@ -87,14 +87,28 @@ app.get('/hls', (req, res) => {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#000;width:100vw;height:100vh;display:flex;align-items:center;justify-content:center}
-video{width:100vw;height:100vh}
+body{background:#000;width:100vw;height:100vh;overflow:hidden}
+#player{width:100vw;height:100vh}
 </style>
 </head>
 <body>
-<video controls autoplay playsinline preload="auto">
-  <source src="${streamSrc}" type="video/mp4">
-</video>
+<div id="player"></div>
+<script src="https://cdn.jsdelivr.net/npm/artplayer/dist/artplayer.js"></script>
+<script>
+var art = new Artplayer({
+  container: '#player',
+  url: '${streamSrc}',
+  autoplay: true,
+  fullscreen: true,
+  playbackRate: true,
+  aspectRatio: true,
+  setting: true,
+  hotkey: true,
+  pip: false,
+  mutex: true,
+  theme: '#e50914'
+});
+</script>
 </body>
 </html>`);
 });
