@@ -569,7 +569,7 @@ function resetPlayer() {
 async function loadStream() {
   if (!curItem || !curFile) return;
   if (streamUrl) { applyStream(); return; }
-  document.getElementById('vload-msg').textContent = 'Obtendo link de streaming...';
+ console.log('Obtendo link de streaming...');
   try {
     const ep = curItem._src==='usenet' ? '/usenet/requestdl' : '/torrents/requestdl';
     const r = await api(ep, { token: apiKey, torrent_id: curItem.id, file_id: curFile.id||0, zip_link: false });
