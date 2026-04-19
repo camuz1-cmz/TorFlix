@@ -605,8 +605,9 @@ function applyStream() {
     document.getElementById('video-wrap').style.display = 'none';
     document.getElementById('vlc-wrap').style.display = 'none';
     document.getElementById('ps4-wrap').style.display = 'block';
-    document.getElementById('ps4-url').textContent = `${window.location.origin}/hls?url=${encodeURIComponent(streamUrl)}`;
-    document.getElementById('ps4-link').href = `${window.location.origin}/hls?url=${encodeURIComponent(streamUrl)}`;
+    const ps4Url = `${window.location.origin}/hls?url=${encodeURIComponent(streamUrl)}`;
+    document.getElementById('ps4-url').textContent = ps4Url;
+    document.getElementById('ps4-link').href = ps4Url;
   } else {
     document.getElementById('video-wrap').style.display = 'none';
     document.getElementById('ps4-wrap').style.display = 'none';
