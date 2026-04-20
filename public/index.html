@@ -267,6 +267,11 @@
     </div>
   </div>
 
+  <div class="field" style="margin-top:0.75rem">
+  <label>API Key — TMDB (opcional)</label>
+  <input type="password" id="tmdb-input" placeholder="Para capas e sinopses..." autocomplete="off">
+</div>
+
   <div id="library-screen">
     <div class="lib-header">
       <div>
@@ -351,11 +356,14 @@
 <script>
 const PROXY = '/proxy';
 let apiKey = '', allItems = [], filter = 'all', curItem = null, curFile = null, streamUrl = '', tab = 'internal';
+let apiKey = '', tmdbKey = '', allItems = [], filter = 'all', curItem = null, curFile = null, streamUrl = '', tab = 'internal';
 
 // ─── INIT ────────────────────────────────────────────────────────────────────
 (function() {
   const k = localStorage.getItem('tbx_key');
   if (k) { apiKey = k; showLibrary(); }
+  const tk = localStorage.getItem('tmdb_key');
+  if (tk) tmdbKey = tk;
 })();
 
 // ─── API ─────────────────────────────────────────────────────────────────────
@@ -379,6 +387,8 @@ async function connect() {
     const r = await api('/user/me');
     if (!r.success) throw new Error('API retornou erro');
     localStorage.setItem('tbx_key', k);
+    const tk = document.getElementById('tmdb-input').value.trim();
+    if (tk) { tmdbKey = tk; localStorage.setItem('tmdb_key', tk); }
     showLibrary();
   } catch(e) {
     const msg = document.getElementById('serr');
@@ -423,6 +433,20 @@ async function refresh() {
     if (u.status === 'fulfilled' && u.value.success) (u.value.data||[]).forEach(x => allItems.push({...x, _src:'usenet'}));
     setStatus('ok', allItems.length + ' itens');
     renderGrid();
+    allItems.forEach(item => {
+  fetchTMDB(item).then(() => {
+    if (!tmdbCache[item.id]?.poster) return;
+    const card = document.querySelector(`.card[data-id="${item.id}"][data-src="${item._src}"]`);
+    if (!card) return;
+    const thumb = card.querySelector('.card-thumb');
+    if (!thumb) return;
+    const lbl = classify(item)==='series'?'Série':'Filme';
+    thumb.innerHTML = `<img src="${tmdbCache[item.id].poster}" alt="" style="width:100%;height:100%;object-fit:cover;">
+      <div class="type-badge">${lbl}</div>
+      <div class="card-overlay"><div class="play-circle">▶</div></div>`;
+  });
+});
+    
   } catch(e) {
     setStatus('err', 'Erro');
     toast('Erro: ' + e.message);
@@ -459,6 +483,19 @@ function fmtSize(b) {
   if (b > 1e9) return (b/1e9).toFixed(1)+' GB';
   if (b > 1e6) return (b/1e6).toFixed(0)+' MB';
   return (b/1e3).toFixed(0)+' KB';
+}
+
+const tmdbCache = {};
+async function fetchTMDB(item) {
+  if (tmdbCache[item.id]) return tmdbCache[item.id];
+  if (!tmdbKey) return {};
+  try {
+    const type = classify(item);
+    const r = await fetch(`/tmdb?title=${encodeURIComponent(item.name)}&type=${type}&tmdb_key=${tmdbKey}`);
+    const data = await r.json();
+    tmdbCache[item.id] = data;
+    return data;
+  } catch(e) { return {}; }
 }
 
 function renderGrid() {
@@ -515,6 +552,17 @@ function openItem(id, src) {
     `<div class="badge">Fonte: <b>${curItem._src==='usenet'?'Usenet':'Torrent'}</b></div>`,
     curItem.created_at ? `<div class="badge">Adicionado: <b>${new Date(curItem.created_at).toLocaleDateString('pt-BR')}</b></div>` : ''
   ].filter(Boolean).join('');
+
+  document.getElementById('moverview') && document.getElementById('moverview').remove();
+const overviewEl = document.createElement('div');
+overviewEl.id = 'moverview';
+overviewEl.style.cssText = 'font-size:0.85rem;color:var(--muted);line-height:1.7;margin-bottom:1.2rem;';
+overviewEl.innerHTML = '<span id="overview-text">Carregando sinopse...</span>';
+document.getElementById('mbadges').after(overviewEl);
+fetchTMDB(curItem).then(meta => {
+  const el = document.getElementById('overview-text');
+  if (el) el.textContent = meta.overview || '';
+});
 
   const vfiles = (curItem.files||[]).filter(f=>isVid(f.name||f.short_name||''));
   const fsec = document.getElementById('files-section');
