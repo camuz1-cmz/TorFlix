@@ -262,15 +262,17 @@
     <label>API Key — Torbox</label>
     <input type="password" id="key-input" placeholder="Cole sua chave aqui..." autocomplete="off" onkeydown="if(event.key==='Enter')connect()">
   </div>
+  <div class="field" style="margin-top:0.75rem">
+  <label>API Key — TMDB (opcional)</label>
+  <input type="password" id="tmdb-input" placeholder="Para capas e sinopses..." autocomplete="off">
+</div>
+      
 
   <button class="btn-primary" id="btn-connect" onclick="connect()">Conectar →</button>
   <div class="setup-err" id="serr"></div>
 </div>
 
-  <div class="field" style="margin-top:0.75rem">
-  <label>API Key — TMDB (opcional)</label>
-  <input type="password" id="tmdb-input" placeholder="Para capas e sinopses..." autocomplete="off">
-</div>
+  
 
   <div id="library-screen">
     <div class="lib-header">
@@ -531,6 +533,15 @@ function renderGrid() {
           ? `<img src="${cachedPoster}" alt="" style="width:100%;height:100%;object-fit:cover;">`
           : `<div class="fallback"><div class="fi">${icon}</div><div style="font-size:.68rem;color:var(--muted);padding:0 8px;text-align:center">${name.slice(0,24)}${name.length>24?'…':''}</div></div>`}
         <div class="type-badge">${lbl}</div>
+        <div class="card-overlay"><div class="play-circle">▶</div></div>
+      </div>
+      <div class="card-info">
+        <div class="card-name" title="${name}">${name}</div>
+        <div class="card-size">${fmtSize(item.size)}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
 
 // ─── MODAL ───────────────────────────────────────────────────────────────────
 function openItem(id, src) {
