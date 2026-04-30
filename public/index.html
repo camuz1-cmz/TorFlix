@@ -256,16 +256,19 @@
 <main>
   <div id="setup-screen">
     <div class="setup-card">
-      <h2>Bem-vindo ao TorboxFlix 🎬</h2>
-      <p>Insira sua API Key do Torbox para acessar sua biblioteca de filmes e séries.</p>
-      <div class="field">
-        <label>API Key</label>
-        <input type="password" id="key-input" placeholder="Cole sua chave aqui..." autocomplete="off" onkeydown="if(event.key==='Enter')connect()">
-      </div>
-      <button class="btn-primary" id="btn-connect" onclick="connect()">Conectar →</button>
-      <div class="setup-err" id="serr"></div>
-    </div>
+  <h2>Bem-vindo ao TorboxFlix 🎬</h2>
+  <p>Insira sua API Key do Torbox para acessar sua biblioteca de filmes e séries.</p>
+  <div class="field">
+    <label>API Key — Torbox</label>
+    <input type="password" id="key-input" placeholder="Cole sua chave aqui..." autocomplete="off" onkeydown="if(event.key==='Enter')connect()">
   </div>
+  <div class="field" style="margin-top:0.75rem">
+    <label>API Key — TMDB (opcional)</label>
+    <input type="password" id="tmdb-input" placeholder="Para capas e sinopses..." autocomplete="off">
+  </div>
+  <button class="btn-primary" id="btn-connect" onclick="connect()">Conectar →</button>
+  <div class="setup-err" id="serr"></div>
+</div>
 
   <div class="field" style="margin-top:0.75rem">
   <label>API Key — TMDB (opcional)</label>
@@ -355,7 +358,6 @@
 
 <script>
 const PROXY = '/proxy';
-let apiKey = '', allItems = [], filter = 'all', curItem = null, curFile = null, streamUrl = '', tab = 'internal';
 let apiKey = '', tmdbKey = '', allItems = [], filter = 'all', curItem = null, curFile = null, streamUrl = '', tab = 'internal';
 
 // ─── INIT ────────────────────────────────────────────────────────────────────
@@ -526,7 +528,7 @@ function renderGrid() {
     const icon = t==='series'?'📺':'🎬';
     const lbl = t==='series'?'Série':'Filme';
     const name = item.name||'Sem título';
-    return `<div class="card" onclick="openItem('${item.id}','${item._src}')">
+    return `<div class="card" data-id="${item.id}" data-src="${item._src}" onclick="openItem('${item.id}','${item._src}')">
       <div class="card-thumb">
         <div class="fallback"><div class="fi">${icon}</div><div style="font-size:.68rem;color:var(--muted);padding:0 8px;text-align:center">${name.slice(0,24)}${name.length>24?'…':''}</div></div>
         <div class="type-badge">${lbl}</div>
