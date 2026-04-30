@@ -509,7 +509,6 @@ function renderGrid() {
   if (s==='name') items.sort((a,b)=>(a.name||'').localeCompare(b.name||''));
   else if (s==='size') items.sort((a,b)=>(b.size||0)-(a.size||0));
   else if (s==='date') items.sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0));
-
   document.getElementById('lib-title').textContent = filter==='movie'?'Filmes':filter==='series'?'Séries':'Biblioteca';
   document.getElementById('lib-count').textContent = items.length + ' itens';
   document.getElementById('loading').style.display = 'none';
@@ -525,19 +524,13 @@ function renderGrid() {
     const icon = t==='series'?'📺':'🎬';
     const lbl = t==='series'?'Série':'Filme';
     const name = item.name||'Sem título';
+    const cachedPoster = tmdbCache[item.id]?.poster;
     return `<div class="card" data-id="${item.id}" data-src="${item._src}" onclick="openItem('${item.id}','${item._src}')">
       <div class="card-thumb">
-        <div class="fallback"><div class="fi">${icon}</div><div style="font-size:.68rem;color:var(--muted);padding:0 8px;text-align:center">${name.slice(0,24)}${name.length>24?'…':''}</div></div>
+        ${cachedPoster
+          ? `<img src="${cachedPoster}" alt="" style="width:100%;height:100%;object-fit:cover;">`
+          : `<div class="fallback"><div class="fi">${icon}</div><div style="font-size:.68rem;color:var(--muted);padding:0 8px;text-align:center">${name.slice(0,24)}${name.length>24?'…':''}</div></div>`}
         <div class="type-badge">${lbl}</div>
-        <div class="card-overlay"><div class="play-circle">▶</div></div>
-      </div>
-      <div class="card-info">
-        <div class="card-name" title="${name}">${name}</div>
-        <div class="card-size">${fmtSize(item.size)}</div>
-      </div>
-    </div>`;
-  }).join('');
-}
 
 // ─── MODAL ───────────────────────────────────────────────────────────────────
 function openItem(id, src) {
